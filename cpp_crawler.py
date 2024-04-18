@@ -1,16 +1,29 @@
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
+from pymongo import MongoClient
 import re 
-import pymongo
 
-def crawlerThread(frontier):
+def connectDB():
+    DB_NAME = "CPP"
+    DB_HOST = "localhost"
+    DB_PORT = 27017
+    # Create a database connection object using pymongo
+    try:
+        client = MongoClient(host=DB_HOST, port=DB_PORT)
+        db = client[DB_NAME]
+        print("Database connected successfully")
+        return db
+    except:
+        print("Database not connected successfully")
+
+def crawlerThread(frontier, pages):
     visited = set()
     while frontier:
         url = frontier.pop()
         html = urlopen(url)
         bs = BeautifulSoup(html, 'html.parser')
-
-        # store page in mongo
+        
+        pages.insert_one({"url": url, "html": bs.get_text().strip()})
 
         visited.add(url)
 
@@ -25,5 +38,11 @@ def crawlerThread(frontier):
                 if re.search('html', link) and link not in visited:
                     frontier.append(link)
 
-frontier = ["https://www.cpp.edu/sci/computer-science/"]
-crawlerThread(frontier)
+def main():
+    db = connectDB()
+    pages = db.pages
+
+    frontier = ["https://www.cpp.edu/sci/computer-science/"]
+    crawlerThread(frontier, pages)
+
+main()
