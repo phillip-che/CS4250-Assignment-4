@@ -7,7 +7,7 @@ def connectDB():
     DB_NAME = "CPP"
     DB_HOST = "localhost"
     DB_PORT = 27017
-    # Create a database connection object using pymongo
+
     try:
         client = MongoClient(host=DB_HOST, port=DB_PORT)
         db = client[DB_NAME]
@@ -16,14 +16,14 @@ def connectDB():
     except:
         print("Database not connected successfully")
 
-def crawlerThread(frontier, pages):
+def crawlerThread(frontier, pagesCol):
     visited = set()
     while frontier:
         url = frontier.pop()
         html = urlopen(url)
         bs = BeautifulSoup(html, 'html.parser')
-        
-        pages.insert_one({"url": url, "html": bs.get_text().strip()})
+
+        pagesCol.insert_one({"url": url, "html": str(bs)})
 
         visited.add(url)
 
@@ -40,9 +40,9 @@ def crawlerThread(frontier, pages):
 
 def main():
     db = connectDB()
-    pages = db.pages
+    pagesCol = db.pages
 
     frontier = ["https://www.cpp.edu/sci/computer-science/"]
-    crawlerThread(frontier, pages)
+    crawlerThread(frontier, pagesCol)
 
 main()
